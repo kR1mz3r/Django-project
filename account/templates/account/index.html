@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %} {{ title }} :: {{ block.super}} {% endblock %}
+{% block content %}
+<div class="account">
+    <div class="avatar">
+        {% if photo %}
+            <img src="{{ photo.url }}" alt="" width="200">
+        {% else %}
+            <img src="/media/photos/avatar/default_img.jpg" alt="" width="200">
+        {% endif %}
+        <div class="change_avatar">
+            {% csrf_token %}
+            <input type="file" id="avatar_input" style="display: none;">
+            <button id="change_avatar_btn">Изменить фотографию</button>
+        </div>
+    </div>
+    <div class="account-info">
+        <h1 class="full-name">{{ last_name }} {{ first_name }} {{ middle_name }}</h1>
+        <p class="department-role">Отдел {{ department }}, {{ role }}</p>
+    </div>
+</div>
+{% if request.user.is_authenticated %}
+<div class="logout">
+    <a href="{% url 'logout' %}" class="btn">Выход</a>
+</div>
+{% endif%}
+
+<script>
+document.getElementById('change_avatar_btn').addEventListener('click', function() {
+    document.getElementById('avatar_input').click();
+});
+document.getElementById('avatar_input').addEventListener('change', function() {
+    var selectedFile = this.files[0];
+    var formData = new FormData();
+    formData.append('avatar', selectedFile);
+    var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    formData.append('csrfmiddlewaretoken', csrfToken);
+    fetch('{% url "upload_avatar" %}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        window.location.href = window.location.href;
+    })
+    .catch(error => console.error('Ошибка:', error));
+});
+</script>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
