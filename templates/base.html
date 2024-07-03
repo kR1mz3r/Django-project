@@ -1,0 +1,66 @@
+{% load static %}
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %} Портал СайтАктив {% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'news/css/news.css' %}?{% now 'U' %}">
+</head>
+<body>
+<header>
+    <h2>Корпоративный портал</h2>
+</header>
+<div class="container">
+        {% if request.user.is_authenticated %}
+            <nav id="nav1">
+                <ul>
+                    <li><a href="{% url 'account' %}">Личный кабинет</a></li>
+                    <li><a href="{% url 'news' %}">Новости</a></li>
+                    <li><a href="{% url 'messenger' %}">Мессенджер</a></li>
+                    <li><a href="{% url 'project' %}">Проекты</a></li>
+                    <li><a href="{% url 'base' %}">База знаний</a></li>
+                </ul>
+            </nav>
+        {% endif %}
+    <main>
+        {% block content %}
+        {% endblock %}
+        <nav aria-label="Pagination">
+            <ul class="pagination">
+
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}" tabindex="-1">Предыдущая</a>
+                    </li>
+                {% endif %}
+
+                {% for p in page_obj.paginator.page_range %}
+
+                    {% if page_obj.number == p %}
+                    <li class="page-item active">
+                        <a class="page-link" href="?page={{ p }}"> {{ p }} <span class="sr-only"></span></a>
+                    </li>
+                    {% elif p > page_obj.number|add:-3 and p < page_obj.number|add:3 %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ p }}">{{ p }}</a>
+                    </li>
+                    {% endif %}
+
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Следующая</a>
+                    </li>
+                {% endif %}
+
+            </ul>
+        </nav>
+    </main>
+</div>
+<footer>
+    © 2024 СайтАктив. Все права защищены. Политика конфиденциальности | Условия использования
+</footer>
+</body>
+</html>
