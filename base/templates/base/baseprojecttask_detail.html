@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %} {{ title }} :: {{ block.super}} {% endblock %}
+{% block content %}
+<div class="base">
+    <a href="http://127.0.0.1:8000/base/" class="btn btn-primary">Назад</a>
+    <div class="row">
+        <div class="col">
+            <div class="task-body">
+                <div class="task-content">
+                    <div class="task-body">
+                        <h5 class="task-project">{{ base_task.project }}</h5>
+                        <p class="task-description">{{base_task.description}}</p>
+                        <ul class="task-updated-files">Файлы:
+                            {% for task in base_task.task.all %}
+                                <li>
+                                    <a href="{{ task.updated_files.url }}" target="_blank"> {{ task.updated_files }}</a>>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="task-footer text-muted">
+                {{ item.created_at|date:"Y-m-d H:i" }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

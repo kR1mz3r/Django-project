@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %} {{ title }} :: {{ block.super}} {% endblock %}
+{% block content %}
+<div class="base">
+    <div class="row">
+        {% for item in project %}
+        <div class="col">
+            <div class="task-body">
+                <div class="task-content">
+                    <div class="task-body">
+                        <h5 class="task-project">{{ item.project }}</h5>
+                        <p class="task-text">{{item.description|truncatewords:10}}</p>
+                        <a href="{{ item.get_absolute_url }}" class="btn btn-primary">Подробнее</a>
+                    </div>
+                </div>
+            </div>
+            <div class="task-footer text-muted">
+                {{ item.created_at|date:"Y-m-d H:i" }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
