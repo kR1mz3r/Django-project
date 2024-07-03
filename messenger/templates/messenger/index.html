@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+{% block title %} {{ title }} :: {{ block.super}} {% endblock %}
+{% block content %}
+<div id="messenger" class="messenger">
+    <div id="sidebar" class="sidebar">
+        <div class="search-bar">
+            <form id="search-form" class="search-form" method="GET" action="">
+                <input type="text" id="search-input" name="query" placeholder="Поиск...">
+            </form>
+        </div>
+        <hr>
+        <div class="list-user">
+            <div class="row">
+                {% for item in messenger %}
+                    <div class="col">
+                        <div class="user-box" data-user-id="{{ item.id }}">
+                            <div class="list-user-avatar">
+                                <div class="avatar">
+                                    {% if item.photo %}
+                                        <img src="{{ item.photo.url }}" alt="" width="50" height="50">
+                                    {% else %}
+                                        <img src="/media/photos/avatar/default_img.jpg" alt="" width="50" height="50">
+                                    {% endif %}
+                                </div>
+                                <div class="list-user-info">
+                                    <h1 class="user-full-name">{{ item.user.last_name }} {{ item.user.first_name }} {{ item.middle_name }}</h1>
+                                    <p class="user-dep-role">{{ item.department }}, {{ item.role }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div id="chat" class="chat" style="display: none;">
+        <div class="chat-header">
+            <h1><span id="chat-recipient"></span></h1>
+        </div>
+        <div id="id_chat_item_container" class="messages-container"></div>
+        <div class="chat__item__container" style="font-size: 20px">
+            {% for item in chat %}
+                {% if item.sender != request.user %}
+                    {% with chat_user=item.sender %}
+                        <div class="chat-header">
+                            <img src="{{ chat_user.customuser.photo.url }}" alt="{{ chat_user.username }}" class="avatar-right" width="50" height="50">{{ chat_user.first_name }}
+                            <br> {{ item.content }}
+                        </div>
+                    {% endwith %}
+                {% elif item.sender == request.user %}
+                    {% with chat_user=item.sender %}
+                        <div class="chat-header">
+                            <img src="{{ chat_user.customuser.photo.url }}" alt="{{ chat_user.username }}" class="avatar-right" width="50" height="50">{{ chat_user.first_name }}
+                            <br> {{ item.content }}
+                        </div>
+                    {% endwith %}
+                {% endif %}
+            {% endfor %}
+            <br />
+            <div class="send-mess">
+                <input type="text"  id="id_message_send_input" />
+                <button type="submit"  id="id_message_send_button">Отправить</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    var searchInput = document.getElementById('search-input');
+    searchInput.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            document.getElementById('search-form').submit();
+        }
+    });
+</script>
+<script>
+    var chatBoxes = document.querySelectorAll('.chat-box');
+chatBoxes.forEach(function(chatBox) {
+    chatBox.addEventListener('click', function() {
+        var chatId = chatBox.dataset.chatId;
+        console.log('Выбран чат с id:', chatId);
+    });
+});
+</script>
+<script>
+    var userBoxes = document.querySelectorAll('.user-box');
+    userBoxes.forEach(function(userBox) {
+        userBox.addEventListener('click', function() {
+            var userId = userBox.dataset.userId;
+            var chat = document.getElementById('chat');
+            chat.style.display = 'block';
+            var messagesContainer = document.getElementById('id_chat_item_container');
+            var recipientName = userBox.querySelector('.user-full-name').textContent;
+            document.getElementById('chat-recipient').textContent = recipientName;
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', '/messenger/load_messages/');
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    if (xhr.status === 200) {
+                        var response = JSON.parse(xhr.responseText);
+                        messagesContainer.innerHTML = '';
+                        response.messages.forEach(function(message) {
+                            var div = document.createElement('div');
+                            div.className = message.sender === recipientName ? 'message-received' : 'message-sent';
+                            div.innerHTML = `<strong>${message.sender}</strong>: ${message.content} <br> <small>${message.timestamp}</small>`;
+                            messagesContainer.appendChild(div);
+                        });
+                    } else {
+                        console.error('Ошибка получения сообщений:', xhr.statusText);
+                    }
+                }
+            };
+            xhr.send();
+        });
+    });
+</script>
+<script>
+    const chatSocket = new WebSocket("ws://" + window.location.host);
+    chatSocket.onopen = function (e) {
+    console.log("The connection was setup successfully !");
+    };
+    chatSocket.onclose = function (e) {
+    console.log("Something unexpected happened !");
+    };
+    document.querySelector("#id_message_send_input").focus();
+    document.querySelector("#id_message_send_input").onkeyup = function (e) {
+    if (e.keyCode == 13) {
+      document.querySelector("#id_message_send_button").click();
+    }
+    };
+    document.querySelector("#id_message_send_button").onclick = function (e) {
+    var messageInput = document.querySelector(
+      "#id_message_send_input"
+    ).value;
+    chatSocket.send(JSON.stringify({ message: messageInput, sender: "{{item.user.sender}}", recipient: "{{item.user.recipient}}"}));
+    };
+    chatSocket.onmessage = function (e) {
+    const data = JSON.parse(e.data);
+    var div = document.createElement("div");
+    div.innerHTML = data.username + " : " + data.message;
+    document.querySelector("#id_message_send_input").value = "";
+    document.querySelector("#id_chat_item_container").appendChild(div);
+    };
+</script>
+{% endblock %}
+
+<script>
+var chatBoxes = document.querySelectorAll('.chat-box');
+
+// Проходим по каждому элементу и добавляем обработчик события при клике
+chatBoxes.forEach(function(chatBox) {
+    chatBox.addEventListener('click', function() {
+        // Получаем id чата из атрибута data-chat-id
+        var chatId = chatBox.dataset.chatId;
+
+        // Здесь можно выполнить действия при выборе чата
+        // Например, переключиться на этот чат и загрузить сообщения для него
+        // Для примера, я просто выведу в консоль id выбранного чата
+        console.log('Выбран чат с id:', chatId);
+    });
+});
+</script>
+
+<!--<script>-->
+<!--document.addEventListener('DOMContentLoaded', function() {-->
+<!--    var userBoxes = document.querySelectorAll('.user-box');-->
+<!--    var messageSendButton = document.getElementById('id_message_send_button');-->
+<!--    var messageSendInput = document.getElementById('id_message_send_input');-->
+<!--    var recipientUsernameInput = document.getElementById('recipient-username');-->
+<!--    var chatSocket = new WebSocket('ws://' + window.location.host + '/ws/messenger/');-->
+
+<!--    userBoxes.forEach(function(userBox) {-->
+<!--        userBox.addEventListener('click', function() {-->
+<!--            var recipientUsername = userBox.querySelector('.user-full-name').textContent;-->
+<!--            document.getElementById('chat-recipient').textContent = recipientUsername;-->
+<!--            recipientUsernameInput.value = recipientUsername;-->
+<!--            document.getElementById('chat').style.display = 'block';-->
+<!--        });-->
+<!--    });-->
+
+<!--    messageSendButton.addEventListener('click', function() {-->
+<!--        var content = messageSendInput.value;-->
+<!--        var senderUsername = document.getElementById('current-username').value;-->
+<!--        var recipientUsername = recipientUsernameInput.value;-->
+
+<!--        if (content && recipientUsername) {-->
+<!--            chatSocket.send(JSON.stringify({-->
+<!--                'message': content,-->
+<!--                'sender': senderUsername,-->
+<!--                'recipient': recipientUsername-->
+<!--            }));-->
+<!--        }-->
+<!--    });-->
+
+<!--    chatSocket.onmessage = function(e) {-->
+<!--        var data = JSON.parse(e.data);-->
+<!--        var message = data.message;-->
+<!--        var sender = data.sender;-->
+<!--        var recipient = data.recipient;-->
+<!--        var conversation_id = data.conversation_id;-->
+
+<!--        // Add the message to the chat UI-->
+<!--        var messagesContainer = document.getElementById('id_chat_item_container');-->
+<!--        var messageElement = document.createElement('div');-->
+<!--        messageElement.textContent = sender + ": " + message;-->
+<!--        messagesContainer.appendChild(messageElement);-->
+<!--    };-->
+
+<!--    chatSocket.onopen = function(e) {-->
+<!--        console.log('The connection was setup successfully!');-->
+<!--    };-->
+
+<!--    chatSocket.onclose = function(e) {-->
+<!--        console.log('Something unexpected happened!');-->
+<!--    };-->
+<!--});-->
+<!--</script>-->
+
+<!--{% for item in chat %}-->
+<!--                {% if item.sender != request.user %}-->
+<!--                    {% with chat_user=item.sender %}-->
+<!--                        <div class="chat-header">-->
+<!--                            <img src="{{ chat_user.customuser.photo.url }}" alt="{{ chat_user.username }}" class="avatar-right" width="50" height="50">{{ chat_user.first_name }}-->
+<!--                        </div>-->
+<!--                    {% endwith %}-->
+<!--                {% elif item.recipient != request.user %}-->
+<!--                    {% with chat_user=item.recipient %}-->
+<!--                        <div class="chat-header">-->
+<!--                            <img src="{{ chat_user.customuser.photo.url }}" alt="{{ chat_user.username }}" class="avatar-right" width="50" height="50">{{ chat_user.first_name }}-->
+<!--                        </div>-->
+<!--                    {% endwith %}-->
+<!--                {% endif %}-->
+<!--                {% for name in messenger %}-->
+<!--                    {% if name.user.username == item.sender.username %}-->
+<!--                        {% if item.sender == request.user %}-->
+<!--                            <div class="message-sent">-->
+<!--                                <p>{{ item.content }}</p>-->
+<!--                            </div>-->
+<!--                        {% else %}-->
+<!--                            <div class="message-received">-->
+<!--                                <p>{{ item.content }}</p>-->
+<!--                            </div>-->
+<!--                        {% endif %}-->
+<!--                    {% elif name.user.username == item.recipient.username %}-->
+<!--                        {% if item.recipient == request.user %}-->
+<!--                            <div class="message-received">-->
+<!--                                <p>{{ item.content }}</p>-->
+<!--                            </div>-->
+<!--                        {% else %}-->
+<!--                            <div class="message-sent">-->
+<!--                                <img src="{{ request.user.customuser.photo.url }}" alt="{{ request.user.username }}" class="avatar-left" width="30" height="30">-->
+<!--                                <p>{{ item.content }}</p>-->
+<!--                            </div>-->
+<!--                        {% endif %}-->
+<!--                    {% endif %}-->
+<!--                {% endfor %}-->
+<!--            {% endfor %}-->
+
+
+
