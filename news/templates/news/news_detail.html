@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block news_item.title %} {{ title }} :: {{ block.super}} {% endblock %}
+{% block content %}
+<div class="news">
+    <div class="row">
+        <div class="col">
+            <div class="card-body">
+                {% if news_item.photo %}
+                    <img src="{{ news_item.photo.url }}" alt="" width="350" class="float-left mr-3">
+                {% endif %}
+                <h5 class="card-title">{{ news_item.title }}</h5>
+                <p class="card-text">{{ news_item.content }}</p>
+            </div>
+            <div class="card-footer text-muted">
+                {{ news_item.created_at|date:"Y-m-d H:i" }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

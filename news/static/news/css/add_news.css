@@ -1,0 +1,31 @@
+text-area.form-control {
+    height: auto;
+}
+
+label {
+    font-size: 20px;
+
+}
+
+.form-group {
+    margin-bottom: 20px;
+    margin-top: 0px;
+}
+
+.form-control {
+    display: block;
+    width: 97%;
+    padding: .375rem .75rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-top: 10px;
+}
+
+button {
+    font-size: 15px;
+    padding: 10px 10px;
+}
+
+.errorlist {
+    color: red;
+}

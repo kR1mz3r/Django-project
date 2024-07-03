@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block news_item.title %} Добавление новости :: {{ block.super}} {% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'news/css/add_news.css' %}?{% now 'U' %}">
+<h1>Добавление новости</h1>
+<form action="{% url 'add_news' %}" method="post">
+    {% csrf_token %}
+    {{ form.non_field.errors }}
+    <div class="form-group">
+        <label for="{{ form.title.id_for_label }}">Заголовок новости: </label>
+        {{form.title}}
+        <div class="invalid-feedback">
+            {{ form.title.errors }}
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="{{ form.content.id_for_label }}">Текст новости: </label>
+        {{form.content}}
+        <div class="invalid-feedback">
+            {{ form.content.errors }}
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="{{ form.photo.id_for_label }}">Фотография: </label>
+        {{form.photo}}
+        <div class="invalid-feedback">
+            {{ form.photo.errors }}
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="{{ form.is_published.id_for_label }}">Опубликовано? </label>
+        {{form.is_published}}
+        <div class="invalid-feedback">
+            {{ form.is_published.errors }}
+        </div>
+    </div>
+    <button type="submit" class="btn">Добавить новость</button>
+</form>
+{% endblock %}
