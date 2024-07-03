@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block news_item.title %} {{ title }} :: {{ block.super}} {% endblock %}
+{% block content %}
+<div class="task">
+    <div class="back">
+        <button id="back-to-project-list">К списку проектов</button>
+    </div>
+    <div class="row">
+        <div class="col">
+            <div class="task-body">
+                <h5 class="task-title">{{ project_item.project }}</h5>
+                <p class="task-text">{{ project_item.description }}</p>
+                <p class="task-files"><a href="{{ project_item.files.url }}" download>Скачать файл</a></p>
+                {% csrf_token %}
+                <input type="file" id="file_input" style="display: none;">
+                <button id="upload_files_btn">Загрузить файл</button>
+            </div>
+            <div class="card-footer text-muted">
+                {{ project_item.created_at|date:"Y-m-d H:i" }}
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+document.getElementById('upload_files_btn').addEventListener('click', function() {
+    document.getElementById('file_input').click();
+});
+document.getElementById('file_input').addEventListener('change', function() {
+    var selectedFile = this.files[0];
+    var formData = new FormData();
+    formData.append('file', selectedFile);
+    var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    formData.append('csrfmiddlewaretoken', csrfToken);
+    var updateFilesUrl = '/project/' + {{ project_item.id }} + '/update_files/';
+    fetch(updateFilesUrl, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        window.location.href = window.location.href;
+    })
+    .catch(error => console.error('Ошибка:', error));
+});
+</script>
+<script>
+    document.getElementById('back-to-project-list').addEventListener('click', function() {
+        window.location.href = '/project/';
+    });
+</script>
+{% endblock %}
